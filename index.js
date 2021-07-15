@@ -6,10 +6,16 @@
 // Dependencies
 const http = require('http');
 const {handleReqRes} = require('./helper/handleReqRes');
-const environment = require('./helper/environment')
+const environment = require('./helper/environments');
+const data = require('./lib/data');
 
 // app object
 const app = {};
+
+// testing file system
+data.delete('test', 'newFile', (err) => {
+    console.log(err);
+})
 
 
 // create server
