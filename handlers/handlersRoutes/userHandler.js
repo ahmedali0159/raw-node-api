@@ -1,5 +1,8 @@
 // dependencies
 const data = require('../../lib/data');
+const {hash} = require('../../helper/utilities');
+const {parseJSON} = require('../../helper/utilities');
+
 
 // module scaffolding
 const handler = {};
@@ -28,10 +31,10 @@ handler._users.post = (requestProperties, callback) => {
       ? requestProperties.body.lastName
       : false;
 
-  const mobileNumber =
-    typeof requestProperties.body.mobileNumber === "string" &&
-    requestProperties.body.mobileNumber.trim().length === 11
-      ? requestProperties.body.mobileNumber
+  const phone =
+    typeof requestProperties.body.phone === "string" &&
+    requestProperties.body.phone.trim().length === 11
+      ? requestProperties.body.phone
       : false;
 
   const password =
@@ -46,31 +49,65 @@ handler._users.post = (requestProperties, callback) => {
       ? requestProperties.body.tosAgrement
       : false;
 
-      if(firstName && lastName && mobileNumber && password && tosAgrement) {
-        data.read('users', mobileNumber, (err, user) => {
+      if(firstName && lastName && phone && password && tosAgrement) {
+        data.read('users', phone, (err, user) => {
             if(err) {
                 let userObject = {
                     firstName,
                     lastName,
-                    mobileNumber,
-                    password,
+                    phone,
+                    password: hash(password),
                     tosAgrement
                 }
+                // stored the user to database
+                data.create('users', phone, userObject), (err) => {
+                    if(!err) {
+                            callback(200, {
+                                'message': 'Users was created successfully'
+                            })
+                    } else {
+                        callback(500, {
+                            'error': 'Could not create users'
+                        })
+                    }
+                };
             } else {
                 callback(500, {
-                    error: 'There was a problem in server side'
+                    'error': 'There was a problem in server side'
                 })
             }
         })
       } else {
           callback(400, {
-              error: 'You have a problem in your request'
+             ' error': 'You have a problem in your request'
           })
       }
 };
 
 handler._users.get = (requestProperties, callback) => {
-  callback(200);
+  const phone =
+  typeof requestProperties.queryStringObject.phone === "string" &&
+  requestProperties.queryStringObject.phone.trim().length === 11
+    ? requestProperties.queryStringObject.phone
+    : false;
+
+    if(phone) {
+        data.read('users', phone, (err, u) => {
+          const user = {...parseJSON(u)}
+          if(!err && user) {
+            delete  user.password;
+            callback(200, user);
+          } else {
+            callback(404, {
+              'error': 'requsted user was not found'
+            })
+          }
+        })
+    } else {
+        callback(404, {
+          'error': 'requsted user was not found'
+        })
+    }
 };
 
 handler._users.put = (requestProperties, callback) => {};
