@@ -43,7 +43,7 @@ handler.handleReqRes  = (req, res) => {
     req.on('end', () => {
         realData += decoder.end();
 
-        requestProperties.body = parseJSON (realData);
+        requestProperties.body = parseJSON(realData);
 
         chosenHandler(requestProperties, (statusCode, payload) => {
             statusCode = typeof(statusCode) === 'number' ? statusCode : 500;
@@ -56,8 +56,6 @@ handler.handleReqRes  = (req, res) => {
                 res.writeHead(statusCode);
                 res.end(payloadString);
         })
-         // response handle
-    res.end('Hello Programmer')
     })
 
    
