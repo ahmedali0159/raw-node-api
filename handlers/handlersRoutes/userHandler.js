@@ -1,6 +1,7 @@
 const data = require('../../lib/data')
 const {hash} = require('../../helper/utilities')
 const {parseJSON} = require('../../helper/utilities')
+const tokenHandler = require('./tokenHandler')
 
 // module scaffolding
 const handler = {};
@@ -47,7 +48,7 @@ handler._users.post = (requestProperties, callback) => {
       ? requestProperties.body.tosAgreament
       : false;
 
-      if (firstName && lastName && phone && password && tosAgreement) {
+      if (firstName && lastName && phone && password && tosAgreament) {
         // make sure that the user doesn't already exists
         data.read('users', phone, (err1) => {
             if (err1) {
@@ -87,6 +88,30 @@ handler._users.get = (requestProperties, callback) => {
       ? requestProperties.queryStringObject.phone
       : false;
     if(phone) {
+      // verify token
+      let token = typeof(requestProperties.headersObj.token) === "str" 
+      ? requestProperties.headersObj.token : false
+
+      tokenHandler._token.verify(token, phone, (tokenId) => {
+        if(tokenId) {
+          
+          data.read('users', phone, (err, u) => {
+            const user = {...parseJSON(u)}
+            if(!err && user) {
+              delete user.password
+              callback(200, user)
+            } else {
+              callback(404, {
+                'error': 'Requested user was not found'
+              })
+            }
+          })
+        } else {
+          callback(403, {
+            'error': 'Authentication falied'
+          })
+        }
+      })
       // lookup the user
       data.read('users', phone, (err, u) => {
         const user = {...parseJSON(u)}
